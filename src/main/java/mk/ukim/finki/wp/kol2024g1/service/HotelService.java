@@ -1,9 +1,7 @@
 package mk.ukim.finki.wp.kol2024g1.service;
 
 import mk.ukim.finki.wp.kol2024g1.model.Hotel;
-import mk.ukim.finki.wp.kol2024g1.model.RoomType;
 import mk.ukim.finki.wp.kol2024g1.model.exceptions.InvalidHotelIdException;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 

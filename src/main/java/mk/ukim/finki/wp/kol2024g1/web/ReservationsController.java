@@ -1,10 +1,29 @@
 package mk.ukim.finki.wp.kol2024g1.web;
 
+import mk.ukim.finki.wp.kol2024g1.model.Reservation;
 import mk.ukim.finki.wp.kol2024g1.model.RoomType;
+import mk.ukim.finki.wp.kol2024g1.service.HotelService;
+import mk.ukim.finki.wp.kol2024g1.service.ReservationService;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 
+@Controller
 public class ReservationsController {
+private final ReservationService reservationService;
+private final HotelService hotelService;
+
+    public ReservationsController(ReservationService reservationService, HotelService hotelService) {
+        this.reservationService = reservationService;
+        this.hotelService = hotelService;
+    }
 
     /**
      * This method should use the "list.html" template to display all reservations.
@@ -22,8 +41,22 @@ public class ReservationsController {
      * @param pageSize
      * @return The view "list.html".
      */
-    public String listAll(String guestName, RoomType roomType, Long hotel, Integer pageNum, Integer pageSize) {
-        return "";
+    @GetMapping(path = {"/", "/reservations"})
+    public String listAll(@RequestParam(required = false) String guestName,
+                          @RequestParam(required = false) RoomType roomType,
+                          @RequestParam(required = false) Long hotel,
+                          @RequestParam(defaultValue = "1") Integer pageNum,
+                          @RequestParam(defaultValue = "10") Integer pageSize,
+                          Model model) {
+        Page<Reservation> page = this.reservationService.findPage(guestName, roomType, hotel, pageNum -1, pageSize);
+        model.addAttribute("page", page);
+        model.addAttribute("guestName", guestName);
+        model.addAttribute("roomType", roomType);
+        model.addAttribute("hotel", hotel);
+        model.addAttribute("rooms", Arrays.stream(RoomType.values()).toList());
+        model.addAttribute("hotels", this.hotelService.listAll());
+
+        return "list";
     }
 
     /**
@@ -32,8 +65,11 @@ public class ReservationsController {
      *
      * @return The view "form.html".
      */
-    public String showAdd() {
-        return "";
+    @GetMapping("/reservations/add")
+    public String showAdd(Model model) {
+        model.addAttribute("rooms", Arrays.stream(RoomType.values()).toList());
+        model.addAttribute("hotels", this.hotelService.listAll());
+        return "form";
     }
 
     /**
@@ -43,8 +79,12 @@ public class ReservationsController {
      *
      * @return The view "form.html".
      */
-    public String showEdit(Long id) {
-        return "";
+    @GetMapping("/reservations/edit/{id}")
+    public String showEdit(Model model, @PathVariable Long id) {
+        model.addAttribute("reservation", this.reservationService.findById(id));
+        model.addAttribute("rooms", Arrays.stream(RoomType.values()).toList());
+        model.addAttribute("hotels", this.hotelService.listAll());
+        return "form";
     }
 
     /**
@@ -54,8 +94,14 @@ public class ReservationsController {
      *
      * @return The view "list.html".
      */
-    public String create(String guestName, LocalDate dateCreated, Integer daysOfStay, RoomType roomType, Long hotelId) {
-        return "";
+    @PostMapping("/reservations")
+    public String create(@RequestParam String guestName,
+                         @RequestParam LocalDate dateCreated,
+                         @RequestParam Integer daysOfStay,
+                         @RequestParam RoomType roomType,
+                         @RequestParam Long hotelId) {
+        this.reservationService.create(guestName, dateCreated, daysOfStay, roomType, hotelId);
+        return "redirect:/reservations";
     }
 
     /**
@@ -65,8 +111,15 @@ public class ReservationsController {
      *
      * @return The view "list.html".
      */
-    public String update(Long id, String guestName, LocalDate dateCreated, Integer daysOfStay, RoomType roomType, Long hotelId) {
-        return "";
+    @PostMapping("/reservations/{id}")
+    public String update(@PathVariable Long id,
+                         @RequestParam String guestName,
+                         @RequestParam LocalDate dateCreated,
+                         @RequestParam Integer daysOfStay,
+                         @RequestParam RoomType roomType,
+                         @RequestParam Long hotelId) {
+        this.reservationService.update(id, guestName, dateCreated, daysOfStay, roomType, hotelId);
+        return "redirect:/reservations";
     }
 
     /**
@@ -76,8 +129,10 @@ public class ReservationsController {
      *
      * @return The view "list.html".
      */
-    public String delete(Long id) {
-        return "";
+    @PostMapping("/reservations/delete/{id}")
+    public String delete(@PathVariable Long id) {
+        this.reservationService.delete(id);
+        return "redirect:/reservations";
     }
 
     /**
@@ -88,7 +143,9 @@ public class ReservationsController {
      *
      * @return The view "list.html".
      */
-    public String extend(Long id) {
-        return "";
+    @PostMapping("/reservations/extend/{id}")
+    public String extend(@PathVariable Long id) {
+        this.reservationService.extendStay(id);
+        return "redirect:/reservations";
     }
 }
